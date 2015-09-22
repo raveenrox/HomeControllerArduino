@@ -120,13 +120,31 @@ void LoopSerialLight()
       wirePrint("sendIR", wireIR);
     }else if(line=="openGate")
     {
-      wirePrint("openGate", wireSecondary);
+      String out="";
+      wirePrint("gate", wireSecondary);
+      delay(2000);
+      Wire.requestFrom(wireSecondary, 1);
+      while (Wire.available()>0) {
+        char c = Wire.read();
+        out+=c;
+      }
+      if(out=="1") { Serial.println("Gate Opened"); }
+      else if(out=="0") { Serial.println("Gate Closed"); }
     }else if(line=="openGarage")
     {
+      String out="";
       wirePrint("garage", wireSecondary);
+      delay(1000);
+      Wire.requestFrom(wireSecondary, 1);
+      while (Wire.available()>0) {
+        char c = Wire.read();
+        out+=c;
+      }
+      if(out=="1") { Serial.println("Garage Door Opened"); }
+      else if(out=="0") { Serial.println("Garage Door Closed"); }
     }else if(line=="openClothLine")
     {
-      wirePrint("openGate", wireSecondary);
+      wirePrint("clothLine", wireSecondary);
     }
     else
     {

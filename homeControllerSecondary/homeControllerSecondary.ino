@@ -4,6 +4,13 @@
 Servo leftDoor;
 Servo rightDoor;
 
+int enableLeftGate = 9;
+int enableRightGate = 10;
+int leftIN1 = 7;
+int leftIN2 = 8;
+int rightIN1 = 11;
+int rightIN2 = 12;
+
 int val;
 int tempPin = 1;
 int pirPin = 3;
@@ -38,9 +45,22 @@ void setup()
 
   leftDoor.attach(5);
   rightDoor.attach(6);
-
   leftDoor.write(0);
   rightDoor.write(180);
+
+  pinMode(enableLeftGate, OUTPUT);
+  pinMode(enableRightGate, OUTPUT);
+  pinMode(leftIN1, OUTPUT);
+  pinMode(leftIN2, OUTPUT);
+  pinMode(rightIN1, OUTPUT);
+  pinMode(rightIN2, OUTPUT);
+
+  digitalWrite(enableLeftGate, LOW);
+  digitalWrite(enableRightGate, LOW);
+  digitalWrite(leftIN1, LOW);
+  digitalWrite(leftIN2, LOW);
+  digitalWrite(rightIN1, LOW);
+  digitalWrite(rightIN2, LOW);
   
   pinMode(pirPin, INPUT);
   digitalWrite(pirPin, LOW);
@@ -127,6 +147,11 @@ void receiveEvent(int howMany)
     Serial.println("Opening/Closing Garage Doors");
     openGarage();
     Serial.println("Done");
+  }else if (line=="gate")
+  {
+    Serial.println("Opening/Closing Gate");
+    openGate();
+    Serial.println("Done");
   }
   request=line;
 }
@@ -138,7 +163,21 @@ void requestEvent()
   {
     dtostrf(getTemp(), 5, 2, charVal);
     Wire.write(charVal);
-  } 
+  } else if(request=="garage")
+  {
+    if(garageDoor) {
+      Wire.write("1");
+    } else {
+      Wire.write("0");
+    }
+  } else if(request=="gate")
+  {
+    if(gateState) {
+      Wire.write("1");
+    }else {
+      Wire.write("0");
+    }
+  }
 }
 
 float getTemp()
@@ -163,9 +202,44 @@ void openGarage()
     {                                
       leftDoor.write(180-pos);
       rightDoor.write(pos);
-      delay(50); 
+      delay(100); 
     } 
     garageDoor=false;
+  }
+}
+
+void openGate()
+{
+  if(!gateState){
+    digitalWrite(leftIN1, LOW);
+    digitalWrite(leftIN2, HIGH);
+    digitalWrite(rightIN1, LOW);
+    digitalWrite(rightIN2, HIGH);
+    digitalWrite(enableLeftGate, HIGH);
+    digitalWrite(enableRightGate, HIGH);
+    delay(1000);
+    digitalWrite(enableLeftGate, LOW);
+    digitalWrite(enableRightGate, LOW);
+    digitalWrite(leftIN1, LOW);
+    digitalWrite(leftIN2, LOW);
+    digitalWrite(rightIN1, LOW);
+    digitalWrite(rightIN2, LOW);
+    gateState=true;
+  }else {
+    digitalWrite(leftIN2, LOW);
+    digitalWrite(leftIN1, HIGH);
+    digitalWrite(rightIN2, LOW);
+    digitalWrite(rightIN1, HIGH);
+    digitalWrite(enableLeftGate, HIGH);
+    digitalWrite(enableRightGate, HIGH);
+    delay(1000);
+    digitalWrite(enableLeftGate, LOW);
+    digitalWrite(enableRightGate, LOW);
+    digitalWrite(leftIN1, LOW);
+    digitalWrite(leftIN2, LOW);
+    digitalWrite(rightIN1, LOW);
+    digitalWrite(rightIN2, LOW);
+    gateState=false;
   }
 }
 
