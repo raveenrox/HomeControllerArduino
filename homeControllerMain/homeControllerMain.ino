@@ -1,6 +1,9 @@
 #include <EEPROM.h>
 #include <Wire.h>
 
+int wireSecondary = 2;
+int wireIR = 3;
+
 int ledPin[54];
 int buttonPin[54];
 
@@ -101,7 +104,31 @@ void LoopSerialLight()
     }else if(line=="restart")
     {
       resetFunc();
-    }else
+    }else if(line=="temp")
+    {
+      String out="";
+      wirePrint("temp", wireSecondary);
+      delay(5);
+      Wire.requestFrom(wireSecondary, 5);
+      while (Wire.available()>0) {
+        char c = Wire.read();
+        out+=c;
+      }
+      Serial.println(out);
+    }else if(line=="sendIR")
+    {
+      wirePrint("sendIR", wireIR);
+    }else if(line=="openGate")
+    {
+      wirePrint("openGate", wireSecondary);
+    }else if(line=="openGarage")
+    {
+      wirePrint("garage", wireSecondary);
+    }else if(line=="openClothLine")
+    {
+      wirePrint("openGate", wireSecondary);
+    }
+    else
     {
       for (int i = 0; i < line.length(); i++)
       {
@@ -153,12 +180,11 @@ void printSerial()
   }
   serialLine = serialLine + "N";
   Serial.println(serialLine);
-  wirePrint(serialLine);
 }
 
-void wirePrint(String line)
+void wirePrint(String line, int connection)
 {
-  Wire.beginTransmission(8);
+  Wire.beginTransmission(connection);
   char bufferArr[64];
   line.toCharArray(bufferArr, 64);
   Wire.write(bufferArr);
@@ -285,7 +311,6 @@ void readEEPROM()
     ln2.concat(",");
   }
   ln2.concat(";");
-  wirePrint(ln2);
 }
 
 void resetFunc()
