@@ -3,13 +3,20 @@
 
 Servo leftDoor;
 Servo rightDoor;
+Servo lock;
+
+int CLEN = 16;
+int fanEnable = 17;
+
+int CLIN1 = 2;
+int CLIN2 = 4;
 
 int enableLeftGate = 9;
 int enableRightGate = 10;
 int leftIN1 = 7;
 int leftIN2 = 8;
-int rightIN1 = 11;
-int rightIN2 = 12;
+int rightIN1 = 12;
+int rightIN2 = 13;
 
 int val;
 int tempPin = 1;
@@ -43,10 +50,12 @@ void setup()
   Wire.onReceive(receiveEvent);
   Wire.onRequest(requestEvent);
 
-  leftDoor.attach(5);
-  rightDoor.attach(6);
-  leftDoor.write(0);
-  rightDoor.write(180);
+  leftDoor.attach(6);
+  rightDoor.attach(5);
+  lock.attach(11);
+  leftDoor.write(245);
+  rightDoor.write(10);
+  lock.write(0);
 
   pinMode(enableLeftGate, OUTPUT);
   pinMode(enableRightGate, OUTPUT);
@@ -54,13 +63,21 @@ void setup()
   pinMode(leftIN2, OUTPUT);
   pinMode(rightIN1, OUTPUT);
   pinMode(rightIN2, OUTPUT);
-
+  pinMode(CLIN1, OUTPUT);
+  pinMode(CLIN1, OUTPUT);
+  pinMode(CLEN, OUTPUT);
+  pinMode(fanEnable, OUTPUT);
+  
   digitalWrite(enableLeftGate, LOW);
   digitalWrite(enableRightGate, LOW);
   digitalWrite(leftIN1, LOW);
   digitalWrite(leftIN2, LOW);
   digitalWrite(rightIN1, LOW);
   digitalWrite(rightIN2, LOW);
+  digitalWrite(CLIN1, LOW);
+  digitalWrite(CLIN2, LOW);
+  digitalWrite(CLEN, LOW);
+  digitalWrite(fanEnable, LOW);
   
   pinMode(pirPin, INPUT);
   digitalWrite(pirPin, LOW);
@@ -93,6 +110,19 @@ void readSerial()
     } else if (line == "motionOff")
     {
       pirState = false;
+    } else if (line == "fanOn")
+    {
+      Serial.println("Fan ON");
+      digitalWrite(fanEnable, HIGH);
+    } else if (line == "fanOff")
+    {
+      Serial.println("Fan OFF");
+      digitalWrite(fanEnable, LOW);
+    } else if (line == "gate") 
+    {
+      Serial.println("Opening/Closing Gate");
+      openGate();
+      Serial.println("Done");
     }
   }
 }
@@ -152,6 +182,11 @@ void receiveEvent(int howMany)
     Serial.println("Opening/Closing Gate");
     openGate();
     Serial.println("Done");
+  } else if( line=="cloth")
+  {
+    Serial.println("Opening/Closing Cloth Line");
+    clothLineOp();
+    Serial.println("Done");
   }
   request=line;
 }
@@ -177,6 +212,13 @@ void requestEvent()
     }else {
       Wire.write("0");
     }
+  } else if(request=="cloth")
+  {
+    if(clothLine) {
+      Wire.write("1"); 
+    } else {
+      Wire.write("0");
+    }
   }
 }
 
@@ -189,21 +231,13 @@ float getTemp()
 
 void openGarage()
 {
-  if(!garageDoor) {
-    for(pos = 0; pos <= 180; pos += 1)
-    {                                
-      leftDoor.write(pos);
-      rightDoor.write(180-pos);
-      delay(15); 
-    } 
+  if(!garageDoor) {                                
+    leftDoor.write(120);
+    rightDoor.write(130);
     garageDoor=true;
-  } else {
-    for(pos = 0; pos <= 180; pos += 1)
-    {                                
-      leftDoor.write(180-pos);
-      rightDoor.write(pos);
-      delay(100); 
-    } 
+  } else {                              
+    leftDoor.write(10);
+    rightDoor.write(240);
     garageDoor=false;
   }
 }
@@ -217,7 +251,7 @@ void openGate()
     digitalWrite(rightIN2, HIGH);
     digitalWrite(enableLeftGate, HIGH);
     digitalWrite(enableRightGate, HIGH);
-    delay(1000);
+    delay(2000);
     digitalWrite(enableLeftGate, LOW);
     digitalWrite(enableRightGate, LOW);
     digitalWrite(leftIN1, LOW);
@@ -232,7 +266,7 @@ void openGate()
     digitalWrite(rightIN1, HIGH);
     digitalWrite(enableLeftGate, HIGH);
     digitalWrite(enableRightGate, HIGH);
-    delay(1000);
+    delay(2000);
     digitalWrite(enableLeftGate, LOW);
     digitalWrite(enableRightGate, LOW);
     digitalWrite(leftIN1, LOW);
@@ -240,6 +274,27 @@ void openGate()
     digitalWrite(rightIN1, LOW);
     digitalWrite(rightIN2, LOW);
     gateState=false;
+  }
+}
+
+void clothLineOp()
+{
+  if(clothLine) {
+    digitalWrite(CLIN1, LOW);
+    digitalWrite(CLIN2, HIGH);
+    digitalWrite(CLEN, HIGH);
+    delay(1500);
+    //digitalWrite(CLIN2, LOW);
+    //digitalWrite(CLEN, LOW);
+    clothLine = false;
+  } else { 
+    digitalWrite(CLIN2, LOW);
+    digitalWrite(CLIN1, HIGH);
+    digitalWrite(CLEN, HIGH);
+    delay(1500);
+    //digitalWrite(CLIN1, LOW);
+    //digitalWrite(CLEN, LOW);
+    clothLine = true;
   }
 }
 

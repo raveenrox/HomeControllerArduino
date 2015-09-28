@@ -1,5 +1,14 @@
+#include <MFRC522.h>
 #include <EEPROM.h>
 #include <Wire.h>
+#include <SPI.h> 
+
+boolean match = false;
+boolean programMode = false;
+int successRead;
+byte storedCard[4];
+byte readCard[4];
+byte masterCard[4];
 
 int wireSecondary = 2;
 int wireIR = 3;
@@ -115,10 +124,22 @@ void LoopSerialLight()
         out+=c;
       }
       Serial.println(out);
-    }else if(line=="sendIR")
+    }else if(line=="getIR")
     {
-      wirePrint("sendIR", wireIR);
-    }else if(line=="openGate")
+      wirePrint("getIR", wireIR);
+      delay(500);
+      Wire.requestFrom(wireIR, 64);
+      String out="";
+      while (Wire.available()>0) {
+        char c = Wire.read();
+        out+=c;
+      }
+      out = out.substring(0, out.indexOf(";"));
+      Serial.println(out);
+    }else if(line.startsWith("ir:")) { 
+      Serial.println(line);
+      wirePrint(line, wireIR);      
+    } else if(line=="XopenGateY0Z" || line=="XopenGateY1Z")
     {
       String out="";
       wirePrint("gate", wireSecondary);
@@ -130,7 +151,7 @@ void LoopSerialLight()
       }
       if(out=="1") { Serial.println("Gate Opened"); }
       else if(out=="0") { Serial.println("Gate Closed"); }
-    }else if(line=="openGarage")
+    }else if(line=="XopenGarageY0Z" || line=="XopenGarageY1Z")
     {
       String out="";
       wirePrint("garage", wireSecondary);
@@ -142,10 +163,31 @@ void LoopSerialLight()
       }
       if(out=="1") { Serial.println("Garage Door Opened"); }
       else if(out=="0") { Serial.println("Garage Door Closed"); }
-    }else if(line=="openClothLine")
+    }else if(line=="XopenClothLineY0Z" || line=="XopenClothLineY1Z")
     {
-      wirePrint("clothLine", wireSecondary);
-    }
+      String out="";
+      wirePrint("cloth", wireSecondary);
+      delay(1000);
+      Wire.requestFrom(wireSecondary, 1);
+      while (Wire.available()>0) {
+        char c = Wire.read();
+        out+=c;
+      }
+      if(out=="1") { Serial.println("Cloth Line Opened"); }
+      else if(out=="0") { Serial.println("Cloth Line Closed"); }
+    } else if(line=="XfanY0Z" || line=="XfanY1Z")
+    {
+      String out="";
+      wirePrint("fan", wireSecondary);
+      delay(1000);
+      Wire.requestFrom(wireSecondary, 1);
+      while (Wire.available()>0) {
+        char c = Wire.read();
+        out+=c;
+      }
+      if(out=="1") { Serial.println("Cloth Line Opened"); }
+      else if(out=="0") { Serial.println("Cloth Line Closed"); }
+    } 
     else
     {
       for (int i = 0; i < line.length(); i++)
